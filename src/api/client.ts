@@ -4,7 +4,7 @@ export interface SessionUser {
   id: number;
   username: string;
   displayName: string | null;
-  role: "admin" | "user";
+  role: "admin" | "user" | "guest";
   totpEnabled: boolean;
 }
 
@@ -37,9 +37,10 @@ export interface AdminUser {
   id: number;
   username: string;
   displayName: string | null;
-  role: "admin" | "user";
+  role: "admin" | "user" | "guest";
   totpEnabled: boolean;
   isActive: boolean;
+  scopeAccess: string[];
 }
 
 export class ApiError extends Error {
@@ -84,7 +85,10 @@ function readCookie(name: string): string | null {
 
 async function apiFetch<T>(
   path: string,
-  init: { method?: "GET" | "POST"; body?: unknown } = {},
+  init: {
+    method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
+    body?: unknown;
+  } = {},
 ): Promise<T> {
   const method = init.method ?? "GET";
   const headers: Record<string, string> = {};
@@ -180,5 +184,42 @@ export function getAdminUsers(): Promise<{ users: AdminUser[] }> {
 export function resetUserTotp(userId: number): Promise<{ reset: boolean }> {
   return apiFetch<{ reset: boolean }>(`/admin/users/${userId}/2fa/reset`, {
     method: "POST",
+  });
+}
+
+export function createAdminUser(input: {
+  username: string;
+  password: string;
+  role: AdminUser["role"];
+}): Promise<{ user: AdminUser }> {
+  return apiFetch<{ user: AdminUser }>("/admin/users", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export function updateAdminUser(
+  userId: number,
+  input: { role: AdminUser["role"]; isActive: boolean },
+): Promise<{ updated: boolean }> {
+  return apiFetch<{ updated: boolean }>(`/admin/users/${userId}`, {
+    method: "PATCH",
+    body: input,
+  });
+}
+
+export function deleteAdminUser(userId: number): Promise<{ deleted: boolean }> {
+  return apiFetch<{ deleted: boolean }>(`/admin/users/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+export function setAdminUserScopes(
+  userId: number,
+  scopeIds: string[],
+): Promise<{ updated: boolean }> {
+  return apiFetch<{ updated: boolean }>(`/admin/users/${userId}/scopes`, {
+    method: "PUT",
+    body: { scopeIds },
   });
 }
