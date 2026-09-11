@@ -214,7 +214,7 @@
   padding: 10px 14px;
 }
 
-.fixture-card {
+.device-card {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -226,13 +226,13 @@
   pointer-events: auto;
 }
 
-.fixture-header {
+.device-header {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.fixture-icon {
+.device-icon {
   width: 22px;
   height: 22px;
   flex-shrink: 0;
@@ -240,11 +240,11 @@
   transition: color 0.2s ease;
 }
 
-.fixture-icon.on {
+.device-icon.on {
   color: #ff9d1f;
 }
 
-.fixture-name {
+.device-name {
   flex: 1;
   font-weight: 500;
   color: #08060d;

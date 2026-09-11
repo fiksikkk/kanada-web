@@ -25,8 +25,8 @@ interface Hotspot {
 // Картинка - 761x1013 (см. PLAN_IMAGE_RATIO в App.css). Координаты
 // подобраны на глаз по floor-plan.png - только roomN:1 (Гостиная)
 // привязан к реальной комнате в тестовой БД (seed_test.sql,
-// room_number=1, fixture "Тест Дали"), остальные пока открывают пустую
-// панель (в БД для них нет фикстур) - это уже разметка под реальные
+// room_number=1, устройство "Тест Дали"), остальные пока открывают пустую
+// панель (в БД для них нет устройств) - это уже разметка под реальные
 // комнаты плана, но данные под них ещё не заведены.
 const ROOM_HOTSPOTS: Hotspot[] = [
   { roomN: 1, label: "Гостиная", left: 47, top: 19, width: 29, height: 32 },
@@ -89,7 +89,7 @@ interface Camera {
   scale: number;
 }
 
-interface Fixture {
+interface Device {
   id: string;
   roomN: number;
   name: string;
@@ -104,13 +104,13 @@ interface StatusRecord {
 }
 
 type WsMessage =
-  | { type: "fixtures"; fixtures: Fixture[] }
+  | { type: "devices"; devices: Device[] }
   | { type: "roomStatus"; records: StatusRecord[] }
   | { type: "liveStatusPush"; record: StatusRecord }
   | { type: "iridiStatus"; connected: boolean };
 
 type OutgoingMessage =
-  | { type: "getFixtures" }
+  | { type: "getDevices" }
   | { type: "getRoomStatus"; room: number }
   | {
       type: "setDevice";
@@ -163,7 +163,7 @@ function computeFitSize(
 }
 
 function App() {
-  const [fixtures, setFixtures] = useState<Fixture[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
   const [openRoomN, setOpenRoomN] = useState<number | null>(null);
   const [statusById, setStatusById] = useState<Record<string, StatusRecord>>(
     {},
@@ -203,14 +203,14 @@ function App() {
 
       ws.onopen = () => {
         setWsConnected(true);
-        ws.send(JSON.stringify({ type: "getFixtures" }));
+        ws.send(JSON.stringify({ type: "getDevices" }));
       };
 
       ws.onmessage = (event: MessageEvent<string>) => {
         try {
           const msg = JSON.parse(event.data) as WsMessage;
-          if (msg.type === "fixtures") {
-            setFixtures(msg.fixtures);
+          if (msg.type === "devices") {
+            setDevices(msg.devices);
           } else if (msg.type === "roomStatus") {
             setStatusById((prev) => {
               const next = { ...prev };
@@ -464,54 +464,54 @@ function App() {
   // тапа пальцем). Реальный фидбек, когда придёт, всё равно перезапишет
   // это значение как авторитетное (см. ws.onmessage) - здесь это просто
   // "предположение, что команда сработает".
-  const toggleSwitch = (fixtureId: string) => {
-    const current = statusById[fixtureId];
+  const toggleSwitch = (deviceId: string) => {
+    const current = statusById[deviceId];
     const nextS = current?.s ? 0 : 1;
     setStatusById((prev) => ({
       ...prev,
-      [fixtureId]: { ...prev[fixtureId], id: fixtureId, s: nextS },
+      [deviceId]: { ...prev[deviceId], id: deviceId, s: nextS },
     }));
     send({
       type: "setDevice",
-      id: fixtureId,
+      id: deviceId,
       field: "switch",
       value: Boolean(nextS),
     });
   };
 
-  const setBrightness = (fixtureId: string, value: number) => {
+  const setBrightness = (deviceId: string, value: number) => {
     setStatusById((prev) => ({
       ...prev,
-      [fixtureId]: { ...prev[fixtureId], id: fixtureId, b: value },
+      [deviceId]: { ...prev[deviceId], id: deviceId, b: value },
     }));
-    send({ type: "setDevice", id: fixtureId, field: "brightness", value });
+    send({ type: "setDevice", id: deviceId, field: "brightness", value });
   };
 
   // move: 0 - открыть (Up), 1 - закрыть (Down) - см. KnxApplyLiveCommand на
   // стороне iRidium. Без optimistic-обновления - в отличие от тумблера/
   // слайдера, у шторы нет мгновенного целевого состояния, реальную позицию
   // отдаст liveStatusPush по мере движения мотора.
-  const moveShutter = (fixtureId: string, direction: 0 | 1) => {
-    send({ type: "setDevice", id: fixtureId, field: "move", value: direction });
+  const moveShutter = (deviceId: string, direction: 0 | 1) => {
+    send({ type: "setDevice", id: deviceId, field: "move", value: direction });
   };
 
-  const stopShutter = (fixtureId: string) => {
-    send({ type: "setDevice", id: fixtureId, field: "stop", value: 1 });
+  const stopShutter = (deviceId: string) => {
+    send({ type: "setDevice", id: deviceId, field: "stop", value: 1 });
   };
 
-  const setShutterPosition = (fixtureId: string, value: number) => {
+  const setShutterPosition = (deviceId: string, value: number) => {
     setStatusById((prev) => ({
       ...prev,
-      [fixtureId]: { ...prev[fixtureId], id: fixtureId, p: value },
+      [deviceId]: { ...prev[deviceId], id: deviceId, p: value },
     }));
-    send({ type: "setDevice", id: fixtureId, field: "position", value });
+    send({ type: "setDevice", id: deviceId, field: "position", value });
   };
 
   const openHotspot = ROOM_HOTSPOTS.find(
     (hotspot) => hotspot.roomN === openRoomN,
   );
-  const displayFixtures = fixtures.filter(
-    (fixture) => fixture.roomN === openRoomN,
+  const displayDevices = devices.filter(
+    (device) => device.roomN === openRoomN,
   );
 
   const cameraStyle = {
@@ -579,27 +579,27 @@ function App() {
           ×
         </button>
         <h2 className="room-panel-title">{openHotspot?.label}</h2>
-        {displayFixtures.map((fixture) => {
-          const fixtureStatus = statusById[fixture.id] ?? {};
-          const isShutter = fixture.type === "shutter";
-          const isOn = Boolean(fixtureStatus.s);
-          const brightness = fixtureStatus.b ?? 0;
-          const position = fixtureStatus.p ?? 0;
+        {displayDevices.map((device) => {
+          const deviceStatus = statusById[device.id] ?? {};
+          const isShutter = device.type === "shutter";
+          const isOn = Boolean(deviceStatus.s);
+          const brightness = deviceStatus.b ?? 0;
+          const position = deviceStatus.p ?? 0;
           // Блокируем при разрыве любого из двух соединений (браузер<->Node
           // или Node<->iRidium), чтобы не создавать иллюзию рабочего
           // тумблера, команда от которого никуда не долетит (см. send()).
           const isDisabled = !wsConnected || !iridiConnected;
-          const handleToggle = () => toggleSwitch(fixture.id);
+          const handleToggle = () => toggleSwitch(device.id);
           const handleBrightnessChange = (value: number) =>
-            setBrightness(fixture.id, value);
+            setBrightness(device.id, value);
           const handlePositionChange = (value: number) =>
-            setShutterPosition(fixture.id, value);
+            setShutterPosition(device.id, value);
           return (
-            <div key={fixture.id} className="fixture-card">
-              <div className="fixture-header">
+            <div key={device.id} className="device-card">
+              <div className="device-header">
                 {isShutter ? (
                   <svg
-                    className={`fixture-icon${position > 0 ? " on" : ""}`}
+                    className={`device-icon${position > 0 ? " on" : ""}`}
                     viewBox="0 0 24 24"
                     fill="none"
                     aria-hidden="true"
@@ -621,7 +621,7 @@ function App() {
                   </svg>
                 ) : (
                   <svg
-                    className={`fixture-icon${isOn ? " on" : ""}`}
+                    className={`device-icon${isOn ? " on" : ""}`}
                     viewBox="0 0 24 24"
                     fill="none"
                     aria-hidden="true"
@@ -637,7 +637,7 @@ function App() {
                     />
                   </svg>
                 )}
-                <span className="fixture-name">{fixture.name}</span>
+                <span className="device-name">{device.name}</span>
                 {!isShutter && (
                   <button
                     type="button"
@@ -646,13 +646,13 @@ function App() {
                     disabled={isDisabled}
                     role="switch"
                     aria-checked={isOn}
-                    aria-label={fixture.name}
+                    aria-label={device.name}
                   >
                     <span className="toggle-knob" />
                   </button>
                 )}
               </div>
-              {fixture.type === "dimmer" && (
+              {device.type === "dimmer" && (
                 <div className="brightness-row">
                   <input
                     type="range"
@@ -675,7 +675,7 @@ function App() {
                     <button
                       type="button"
                       className="shutter-btn"
-                      onClick={() => moveShutter(fixture.id, 0)}
+                      onClick={() => moveShutter(device.id, 0)}
                       disabled={isDisabled}
                       aria-label="Открыть"
                     >
@@ -692,7 +692,7 @@ function App() {
                     <button
                       type="button"
                       className="shutter-btn"
-                      onClick={() => stopShutter(fixture.id)}
+                      onClick={() => stopShutter(device.id)}
                       disabled={isDisabled}
                       aria-label="Стоп"
                     >
@@ -710,7 +710,7 @@ function App() {
                     <button
                       type="button"
                       className="shutter-btn"
-                      onClick={() => moveShutter(fixture.id, 1)}
+                      onClick={() => moveShutter(device.id, 1)}
                       disabled={isDisabled}
                       aria-label="Закрыть"
                     >
