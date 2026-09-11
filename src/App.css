@@ -1,0 +1,288 @@
+.app {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: #f4f3ee;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.map-backdrop {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(60px) brightness(0.75) saturate(1.1);
+  transform: scale(1.15);
+}
+
+.map-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Стабильный, никогда сам не трансформируется - его rect это всегда
+   "естественная" геометрия картинки для расчёта камеры в App.jsx,
+   независимо от текущего зума/сдвига .map-camera внутри. Размер
+   (width/height) задаётся инлайн-стилем из App.jsx пикселями
+   (computeFitSize) - CSS aspect-ratio внутри flex ненадёжно выводит
+   высоту из ширины на части мобильных браузеров (картинку растягивало).
+   БЕЗ overflow:hidden - иначе зумленный .map-camera обрезался бы по
+   границе этого (фиксированного, "как картинка вписана без зума")
+   прямоугольника вместо границы всего экрана; обрезка уже есть у
+   .map-viewport выше по дереву. touch-action:none - иначе на
+   тач-устройствах браузер сам перехватит драг/пинч под нативный
+   скролл/зум страницы вместо наших pointer-обработчиков. */
+.map-sizer {
+  position: relative;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.map-sizer:active {
+  cursor: grabbing;
+}
+
+/* Единая камера: transform-origin всегда в углу (0 0), transform всегда
+   translate(x,y) scale(s) - x/y/s и transition считаются в App.jsx
+   (transition выключается на время живого драга/пинча/колеса). */
+.map-camera {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+}
+
+.map-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.room-hotspot {
+  position: absolute;
+  border: none;
+  background: transparent;
+  color: transparent;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.room-hotspot:focus {
+  outline: none;
+}
+
+.room-hotspot:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Сама панель прозрачная (карта под ней остаётся видна, особенно
+   важно на телефоне - там панель почти во весь экран) - непрозрачный
+   фон только у отдельных карточек внутри (заголовок, крестик, строки
+   устройств). */
+.room-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 300px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 20px;
+  color: #08060d;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+  text-align: left;
+  pointer-events: none;
+}
+
+.room-panel.open {
+  transform: translateX(0);
+}
+
+/* pointer-events:auto только на самих карточках - чтобы прозрачные
+   промежутки между ними не перехватывали драг/тап по карте под панелью. */
+.room-panel-title,
+.room-panel-close {
+  display: inline-block;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+}
+
+.room-panel-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  line-height: 1;
+  font-size: 22px;
+  color: #08060d;
+}
+
+.room-panel-title {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+}
+
+.fixture-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  pointer-events: auto;
+}
+
+.fixture-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fixture-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: #c7c5cc;
+  transition: color 0.2s ease;
+}
+
+.fixture-icon.on {
+  color: #ff9d1f;
+}
+
+.fixture-name {
+  flex: 1;
+  font-weight: 500;
+  color: #08060d;
+}
+
+/* Тумблер-переключатель - пилюля с кружком, вместо кнопки "Вкл/Выкл". */
+.toggle-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #e2e0e6;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toggle-switch.on {
+  background: linear-gradient(135deg, #ffc35c, #ff9d1f);
+}
+
+.toggle-switch:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease;
+}
+
+.toggle-switch.on .toggle-knob {
+  transform: translateX(20px);
+}
+
+.brightness-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Слайдер яркости со стилизованной заливкой по значению (--fill,
+   выставляется инлайн из App.jsx) и кастомным кружком-ползунком -
+   отдельно под WebKit/Blink (::-webkit-slider-thumb, градиент фона) и
+   под Firefox (::-moz-range-track/-progress, там градиент фона не
+   работает для "заливки", нужен отдельный progress-псевдоэлемент). */
+.brightness-slider {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    #ff9d1f var(--fill, 0%),
+    #ecebee var(--fill, 0%)
+  );
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.brightness-slider:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.brightness-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #ff9d1f;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.brightness-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #ecebee;
+}
+
+.brightness-slider::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: #ff9d1f;
+}
+
+.brightness-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #ff9d1f;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.brightness-value {
+  width: 38px;
+  text-align: right;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: #6b6375;
+}

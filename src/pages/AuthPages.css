@@ -1,0 +1,91 @@
+/* Голый каркас под дизайнами - только чтобы формы логина/2FA были
+   рабочими и читаемыми, без притязаний на финальный вид. */
+.auth-screen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 340px;
+  text-align: left;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.auth-field label {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.auth-field input {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.auth-field input:focus {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 1px;
+}
+
+.auth-submit {
+  width: 100%;
+  font: inherit;
+  font-weight: 500;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.auth-error {
+  color: #c0392b;
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.auth-switch {
+  margin-top: 16px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.auth-switch button {
+  font: inherit;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.auth-recovery-codes {
+  font-family: var(--mono);
+  font-size: 14px;
+  background: var(--code-bg);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 16px 0;
+  white-space: pre-wrap;
+}
