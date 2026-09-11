@@ -94,14 +94,6 @@ interface Fixture {
   roomN: number;
   name: string;
   type: string;
-  isDemo?: boolean;
-}
-
-interface DisplayFixture {
-  id: string;
-  name: string;
-  type: string;
-  isDemo?: boolean;
 }
 
 interface StatusRecord {
@@ -110,15 +102,11 @@ interface StatusRecord {
   b?: number;
 }
 
-interface DemoStatus {
-  s: number;
-  b: number;
-}
-
 type WsMessage =
   | { type: "fixtures"; fixtures: Fixture[] }
   | { type: "roomStatus"; records: StatusRecord[] }
-  | { type: "liveStatusPush"; record: StatusRecord };
+  | { type: "liveStatusPush"; record: StatusRecord }
+  | { type: "iridiStatus"; connected: boolean };
 
 type OutgoingMessage =
   | { type: "getFixtures" }
@@ -179,13 +167,6 @@ function App() {
   const [statusById, setStatusById] = useState<Record<string, StatusRecord>>(
     {},
   );
-  // Локальный демо-светильник для комнат без реальных фикстур в БД -
-  // тестовая заглушка, чтобы проверять внешний вид/механику тумблера и
-  // слайдера в любой комнате плана, не дожидаясь реальных данных с
-  // сервера. Никуда по WS не уходит, живёт только в этом состоянии.
-  const [demoStatus, setDemoStatus] = useState<Record<number, DemoStatus>>(
-    {},
-  );
   // Единая "камера": transform-origin всегда в углу (0,0), transform
   // всегда `translate(x,y) scale(scale)` - это стандартная схема для
   // pan/zoom (drag, pinch, колесо), где нет неоднозначности с порядком
@@ -195,6 +176,10 @@ function App() {
   const [isInteracting, setIsInteracting] = useState(false);
   const [fitSize, setFitSize] = useState<FitSize>({ width: 0, height: 0 });
   const [wsConnected, setWsConnected] = useState(false);
+  // Соединение браузер<->Node может быть открыто, а сам Node при этом не
+  // достучаться до iRidium (см. WsGatewayService/broadcastIridiStatus) -
+  // отдельный флаг, чтобы не путать эти два разных "не работает".
+  const [iridiConnected, setIridiConnected] = useState(true);
   const wsRef = useRef<WebSocket | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const sizerRef = useRef<HTMLDivElement>(null);
@@ -238,6 +223,8 @@ function App() {
               ...prev,
               [msg.record.id]: { ...prev[msg.record.id], ...msg.record },
             }));
+          } else if (msg.type === "iridiStatus") {
+            setIridiConnected(msg.connected);
           }
         } catch (err) {
           console.error("Bad WS message", err);
@@ -470,48 +457,41 @@ function App() {
     }
   };
 
+  // Optimistic-обновление: тумблер/слайдер должны отозваться сразу по
+  // клику, не дожидаясь liveStatusPush с реальной шины (которого может не
+  // быть вовсе, если провод ещё не подключен, либо он просто медленнее
+  // тапа пальцем). Реальный фидбек, когда придёт, всё равно перезапишет
+  // это значение как авторитетное (см. ws.onmessage) - здесь это просто
+  // "предположение, что команда сработает".
   const toggleSwitch = (fixtureId: string) => {
     const current = statusById[fixtureId];
+    const nextS = current?.s ? 0 : 1;
+    setStatusById((prev) => ({
+      ...prev,
+      [fixtureId]: { ...prev[fixtureId], id: fixtureId, s: nextS },
+    }));
     send({
       type: "setLight",
       id: fixtureId,
       field: "switch",
-      value: !current?.s,
+      value: Boolean(nextS),
     });
   };
 
   const setBrightness = (fixtureId: string, value: number) => {
+    setStatusById((prev) => ({
+      ...prev,
+      [fixtureId]: { ...prev[fixtureId], id: fixtureId, b: value },
+    }));
     send({ type: "setLight", id: fixtureId, field: "brightness", value });
-  };
-
-  const toggleDemoSwitch = (roomN: number) => {
-    setDemoStatus((prev) => {
-      const current = prev[roomN] ?? { s: 0, b: 50 };
-      return { ...prev, [roomN]: { ...current, s: current.s ? 0 : 1 } };
-    });
-  };
-
-  const setDemoBrightness = (roomN: number, value: number) => {
-    setDemoStatus((prev) => {
-      const current = prev[roomN] ?? { s: 0, b: 50 };
-      return { ...prev, [roomN]: { ...current, b: value } };
-    });
   };
 
   const openHotspot = ROOM_HOTSPOTS.find(
     (hotspot) => hotspot.roomN === openRoomN,
   );
-  const roomFixtures = fixtures.filter(
+  const displayFixtures = fixtures.filter(
     (fixture) => fixture.roomN === openRoomN,
   );
-  // Нет реальных фикстур для этой комнаты в БД - показываем один демо-
-  // светильник вместо пустой панели (см. demoStatus выше).
-  const displayFixtures: DisplayFixture[] =
-    roomFixtures.length > 0
-      ? roomFixtures
-      : openRoomN !== null
-        ? [{ id: `demo-${openRoomN}`, name: "Свет", type: "dimmer", isDemo: true }]
-        : [];
 
   const cameraStyle = {
     transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})`,
@@ -523,6 +503,9 @@ function App() {
       <AccountMenu />
       {!wsConnected && (
         <div className="ws-banner">Нет соединения — переподключение…</div>
+      )}
+      {wsConnected && !iridiConnected && (
+        <div className="ws-banner">Нет подключения к iRidium серверу</div>
       )}
       <div
         className="map-backdrop"
@@ -576,22 +559,16 @@ function App() {
         </button>
         <h2 className="room-panel-title">{openHotspot?.label}</h2>
         {displayFixtures.map((fixture) => {
-          const fixtureStatus = fixture.isDemo
-            ? (demoStatus[openRoomN as number] ?? { s: 0, b: 50 })
-            : (statusById[fixture.id] ?? {});
+          const fixtureStatus = statusById[fixture.id] ?? {};
           const isOn = Boolean(fixtureStatus.s);
           const brightness = fixtureStatus.b ?? 0;
-          // Демо-светильник ни от чего не зависит - живёт только в
-          // локальном стейте. Реальную фикстуру блокируем при разрыве
-          // соединения, чтобы не создавать иллюзию рабочего тумблера,
-          // команда от которого никуда не долетит (см. send()).
-          const isDisabled = !fixture.isDemo && !wsConnected;
-          const handleToggle = fixture.isDemo
-            ? () => toggleDemoSwitch(openRoomN as number)
-            : () => toggleSwitch(fixture.id);
-          const handleBrightnessChange = fixture.isDemo
-            ? (value: number) => setDemoBrightness(openRoomN as number, value)
-            : (value: number) => setBrightness(fixture.id, value);
+          // Блокируем при разрыве любого из двух соединений (браузер<->Node
+          // или Node<->iRidium), чтобы не создавать иллюзию рабочего
+          // тумблера, команда от которого никуда не долетит (см. send()).
+          const isDisabled = !wsConnected || !iridiConnected;
+          const handleToggle = () => toggleSwitch(fixture.id);
+          const handleBrightnessChange = (value: number) =>
+            setBrightness(fixture.id, value);
           return (
             <div key={fixture.id} className="fixture-card">
               <div className="fixture-header">
