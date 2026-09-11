@@ -100,6 +100,7 @@ interface StatusRecord {
   id: string;
   s?: number;
   b?: number;
+  p?: number;
 }
 
 type WsMessage =
@@ -112,9 +113,9 @@ type OutgoingMessage =
   | { type: "getFixtures" }
   | { type: "getRoomStatus"; room: number }
   | {
-      type: "setLight";
+      type: "setDevice";
       id: string;
-      field: "switch" | "brightness";
+      field: "switch" | "brightness" | "move" | "stop" | "position";
       value: boolean | number;
     };
 
@@ -471,7 +472,7 @@ function App() {
       [fixtureId]: { ...prev[fixtureId], id: fixtureId, s: nextS },
     }));
     send({
-      type: "setLight",
+      type: "setDevice",
       id: fixtureId,
       field: "switch",
       value: Boolean(nextS),
@@ -483,7 +484,27 @@ function App() {
       ...prev,
       [fixtureId]: { ...prev[fixtureId], id: fixtureId, b: value },
     }));
-    send({ type: "setLight", id: fixtureId, field: "brightness", value });
+    send({ type: "setDevice", id: fixtureId, field: "brightness", value });
+  };
+
+  // move: 0 - открыть (Up), 1 - закрыть (Down) - см. KnxApplyLiveCommand на
+  // стороне iRidium. Без optimistic-обновления - в отличие от тумблера/
+  // слайдера, у шторы нет мгновенного целевого состояния, реальную позицию
+  // отдаст liveStatusPush по мере движения мотора.
+  const moveShutter = (fixtureId: string, direction: 0 | 1) => {
+    send({ type: "setDevice", id: fixtureId, field: "move", value: direction });
+  };
+
+  const stopShutter = (fixtureId: string) => {
+    send({ type: "setDevice", id: fixtureId, field: "stop", value: 1 });
+  };
+
+  const setShutterPosition = (fixtureId: string, value: number) => {
+    setStatusById((prev) => ({
+      ...prev,
+      [fixtureId]: { ...prev[fixtureId], id: fixtureId, p: value },
+    }));
+    send({ type: "setDevice", id: fixtureId, field: "position", value });
   };
 
   const openHotspot = ROOM_HOTSPOTS.find(
@@ -560,8 +581,10 @@ function App() {
         <h2 className="room-panel-title">{openHotspot?.label}</h2>
         {displayFixtures.map((fixture) => {
           const fixtureStatus = statusById[fixture.id] ?? {};
+          const isShutter = fixture.type === "shutter";
           const isOn = Boolean(fixtureStatus.s);
           const brightness = fixtureStatus.b ?? 0;
+          const position = fixtureStatus.p ?? 0;
           // Блокируем при разрыве любого из двух соединений (браузер<->Node
           // или Node<->iRidium), чтобы не создавать иллюзию рабочего
           // тумблера, команда от которого никуда не долетит (см. send()).
@@ -569,37 +592,65 @@ function App() {
           const handleToggle = () => toggleSwitch(fixture.id);
           const handleBrightnessChange = (value: number) =>
             setBrightness(fixture.id, value);
+          const handlePositionChange = (value: number) =>
+            setShutterPosition(fixture.id, value);
           return (
             <div key={fixture.id} className="fixture-card">
               <div className="fixture-header">
-                <svg
-                  className={`fixture-icon${isOn ? " on" : ""}`}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.5.4.6.9.6 1.5V16h6v-.7c0-.6.1-1.1.6-1.5A6 6 0 0 0 12 3Z"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill={isOn ? "currentColor" : "none"}
-                    fillOpacity={isOn ? 0.18 : 0}
-                  />
-                </svg>
+                {isShutter ? (
+                  <svg
+                    className={`fixture-icon${position > 0 ? " on" : ""}`}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <rect
+                      x="4"
+                      y="4"
+                      width="16"
+                      height="16"
+                      rx="1"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                    />
+                    <path
+                      d="M4 8h16M4 12h16M4 16h16"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className={`fixture-icon${isOn ? " on" : ""}`}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.5.4.6.9.6 1.5V16h6v-.7c0-.6.1-1.1.6-1.5A6 6 0 0 0 12 3Z"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill={isOn ? "currentColor" : "none"}
+                      fillOpacity={isOn ? 0.18 : 0}
+                    />
+                  </svg>
+                )}
                 <span className="fixture-name">{fixture.name}</span>
-                <button
-                  type="button"
-                  className={`toggle-switch${isOn ? " on" : ""}`}
-                  onClick={handleToggle}
-                  disabled={isDisabled}
-                  role="switch"
-                  aria-checked={isOn}
-                  aria-label={fixture.name}
-                >
-                  <span className="toggle-knob" />
-                </button>
+                {!isShutter && (
+                  <button
+                    type="button"
+                    className={`toggle-switch${isOn ? " on" : ""}`}
+                    onClick={handleToggle}
+                    disabled={isDisabled}
+                    role="switch"
+                    aria-checked={isOn}
+                    aria-label={fixture.name}
+                  >
+                    <span className="toggle-knob" />
+                  </button>
+                )}
               </div>
               {fixture.type === "dimmer" && (
                 <div className="brightness-row">
@@ -616,6 +667,81 @@ function App() {
                     disabled={isDisabled}
                   />
                   <span className="brightness-value">{brightness}%</span>
+                </div>
+              )}
+              {isShutter && (
+                <div className="shutter-controls">
+                  <div className="shutter-buttons">
+                    <button
+                      type="button"
+                      className="shutter-btn"
+                      onClick={() => moveShutter(fixture.id, 0)}
+                      disabled={isDisabled}
+                      aria-label="Открыть"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M12 19V5M6 11l6-6 6 6"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      className="shutter-btn"
+                      onClick={() => stopShutter(fixture.id)}
+                      disabled={isDisabled}
+                      aria-label="Стоп"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <rect
+                          x="7"
+                          y="7"
+                          width="10"
+                          height="10"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      className="shutter-btn"
+                      onClick={() => moveShutter(fixture.id, 1)}
+                      disabled={isDisabled}
+                      aria-label="Закрыть"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M12 5v14M6 13l6 6 6-6"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="brightness-row">
+                    <input
+                      type="range"
+                      className="brightness-slider"
+                      style={
+                        { "--fill": `${position}%` } as React.CSSProperties
+                      }
+                      min={0}
+                      max={100}
+                      value={position}
+                      onChange={(event) =>
+                        handlePositionChange(Number(event.target.value))
+                      }
+                      disabled={isDisabled}
+                    />
+                    <span className="brightness-value">{position}%</span>
+                  </div>
                 </div>
               )}
             </div>

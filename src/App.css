@@ -360,3 +360,41 @@
   font-variant-numeric: tabular-nums;
   color: #6b6375;
 }
+
+.shutter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shutter-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.shutter-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: #f4f3f6;
+  color: #6b6375;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.shutter-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.shutter-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
