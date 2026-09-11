@@ -53,6 +53,19 @@ export class ApiError extends Error {
   }
 }
 
+// Бэкенд недоступен (не поднят, сеть отвалилась, таймаут) - в отличие
+// от ApiError (сервер ответил, просто с ошибкой), сюда попадают случаи,
+// когда ответа не было вообще. AuthContext различает эти два случая,
+// чтобы не путать "не залогинен" с "сервер не отвечает".
+export class NetworkError extends Error {
+  constructor(cause: unknown) {
+    super("network_error");
+    this.cause = cause;
+  }
+}
+
+const REQUEST_TIMEOUT_MS = 10000;
+
 // Вызывается при 401 от защищённого эндпоинта (сессия протухла/отозвана
 // посреди работы) - AuthContext подписывается на это, чтобы сбросить
 // локальное состояние без жёсткой перезагрузки страницы.
@@ -83,12 +96,26 @@ async function apiFetch<T>(
     if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    credentials: "include",
-    headers,
-    body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
-  });
+  const timeoutController = new AbortController();
+  const timeoutTimer = window.setTimeout(
+    () => timeoutController.abort(),
+    REQUEST_TIMEOUT_MS,
+  );
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      credentials: "include",
+      headers,
+      body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
+      signal: timeoutController.signal,
+    });
+  } catch (err) {
+    throw new NetworkError(err);
+  } finally {
+    window.clearTimeout(timeoutTimer);
+  }
 
   if (res.status === 401) {
     unauthorizedHandler?.();

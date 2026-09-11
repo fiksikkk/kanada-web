@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth.ts";
+import { OfflineScreen } from "./OfflineScreen.tsx";
+import "../pages/AuthPages.css";
 
 export function ProtectedRoute({
   children,
@@ -9,10 +11,17 @@ export function ProtectedRoute({
   children: ReactNode;
   adminOnly?: boolean;
 }) {
-  const { status, user } = useAuth();
+  const { status, user, refresh } = useAuth();
 
   if (status === "loading") {
-    return null;
+    return (
+      <main className="auth-screen">
+        <p>Загрузка…</p>
+      </main>
+    );
+  }
+  if (status === "offline") {
+    return <OfflineScreen onRetry={() => void refresh()} />;
   }
   if (status === "anonymous") {
     return <Navigate to="/login" replace />;

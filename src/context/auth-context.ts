@@ -1,7 +1,7 @@
 import { createContext } from "react";
 import type { SessionUser } from "../api/client.ts";
 
-export type AuthStatus = "loading" | "authenticated" | "anonymous";
+export type AuthStatus = "loading" | "authenticated" | "anonymous" | "offline";
 
 export interface AuthContextValue {
   status: AuthStatus;

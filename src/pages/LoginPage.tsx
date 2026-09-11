@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { login } from "../api/client.ts";
 import { describeAuthError } from "../api/errors.ts";
 import { useAuth } from "../context/useAuth.ts";
+import { OfflineScreen } from "../components/OfflineScreen.tsx";
 import "./AuthPages.css";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { refresh } = useAuth();
+  const { status, refresh } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,10 @@ export function LoginPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (status === "offline") {
+    return <OfflineScreen onRetry={() => void refresh()} />;
+  }
 
   return (
     <main className="auth-screen">

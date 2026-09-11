@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { getSession, logout as apiLogout, onUnauthorized } from "../api/client.ts";
+import {
+  getSession,
+  logout as apiLogout,
+  onUnauthorized,
+  NetworkError,
+} from "../api/client.ts";
 import { AuthContext, type AuthStatus } from "./auth-context.ts";
 import type { SessionUser } from "../api/client.ts";
 
@@ -17,6 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (err) {
       console.error("Failed to fetch session", err);
+      if (err instanceof NetworkError) {
+        setUser(null);
+        setStatus("offline");
+        return;
+      }
     }
     setUser(null);
     setStatus("anonymous");
