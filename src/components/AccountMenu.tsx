@@ -41,6 +41,15 @@ export function AccountMenu() {
           >
             Настройки безопасности
           </Link>
+          {user?.role === "admin" && (
+            <Link
+              to="/admin/users"
+              className="account-menu-item"
+              onClick={() => setOpen(false)}
+            >
+              Администрирование
+            </Link>
+          )}
           <button
             type="button"
             className="account-menu-item"

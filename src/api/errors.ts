@@ -13,6 +13,8 @@ const MESSAGES: Record<string, string> = {
   no_pending_secret: "Сначала запросите новый QR-код",
   unauthorized: "Сессия истекла, войдите заново",
   csrf_mismatch: "Не удалось подтвердить запрос, обновите страницу",
+  user_not_found: "Пользователь не найден",
+  forbidden: "Недостаточно прав",
 };
 
 export function describeAuthError(error: unknown): string {

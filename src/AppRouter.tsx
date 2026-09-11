@@ -4,6 +4,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 import { LoginPage } from "./pages/LoginPage.tsx";
 import { TwoFactorPage } from "./pages/TwoFactorPage.tsx";
 import { SettingsPage } from "./pages/SettingsPage.tsx";
+import { AdminUsersPage } from "./pages/AdminUsersPage.tsx";
 
 export function AppRouter() {
   return (
@@ -23,6 +24,14 @@ export function AppRouter() {
         element={
           <ProtectedRoute>
             <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute adminOnly>
+            <AdminUsersPage />
           </ProtectedRoute>
         }
       />

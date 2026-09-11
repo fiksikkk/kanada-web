@@ -33,6 +33,15 @@ export interface TotpConfirmResponse {
   recoveryCodes: string[];
 }
 
+export interface AdminUser {
+  id: number;
+  username: string;
+  displayName: string | null;
+  role: "admin" | "user";
+  totpEnabled: boolean;
+  isActive: boolean;
+}
+
 export class ApiError extends Error {
   status: number;
   code: string;
@@ -134,5 +143,15 @@ export function confirmTotp(code: string): Promise<TotpConfirmResponse> {
   return apiFetch<TotpConfirmResponse>("/auth/2fa/confirm", {
     method: "POST",
     body: { code },
+  });
+}
+
+export function getAdminUsers(): Promise<{ users: AdminUser[] }> {
+  return apiFetch<{ users: AdminUser[] }>("/admin/users");
+}
+
+export function resetUserTotp(userId: number): Promise<{ reset: boolean }> {
+  return apiFetch<{ reset: boolean }>(`/admin/users/${userId}/2fa/reset`, {
+    method: "POST",
   });
 }
