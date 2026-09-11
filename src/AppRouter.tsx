@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import App from "./App.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 import { LoginPage } from "./pages/LoginPage.tsx";
@@ -17,6 +17,7 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

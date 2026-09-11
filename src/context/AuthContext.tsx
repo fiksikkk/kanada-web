@@ -8,14 +8,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
 
   const refresh = useCallback(async () => {
-    const session = await getSession();
-    if (session.authenticated && session.user) {
-      setUser(session.user);
-      setStatus("authenticated");
-    } else {
-      setUser(null);
-      setStatus("anonymous");
+    try {
+      const session = await getSession();
+      if (session.authenticated && session.user) {
+        setUser(session.user);
+        setStatus("authenticated");
+        return;
+      }
+    } catch (err) {
+      console.error("Failed to fetch session", err);
     }
+    setUser(null);
+    setStatus("anonymous");
   }, []);
 
   const logout = useCallback(async () => {

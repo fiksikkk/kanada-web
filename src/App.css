@@ -8,6 +8,21 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+.ws-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #08060d;
+  font-size: 13px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
 .map-backdrop {
   position: absolute;
   inset: 0;

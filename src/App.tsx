@@ -193,6 +193,7 @@ function App() {
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, scale: 1 });
   const [isInteracting, setIsInteracting] = useState(false);
   const [fitSize, setFitSize] = useState<FitSize>({ width: 0, height: 0 });
+  const [wsConnected, setWsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const sizerRef = useRef<HTMLDivElement>(null);
@@ -200,35 +201,67 @@ function App() {
   const gestureRef = useRef<Gesture | null>(null);
   const wheelIdleTimerRef = useRef<number | undefined>(undefined);
 
+  // Реконнект с фиксированной паузой (без бэкоффа - это локальная сеть
+  // умного дома, а не публичный интернет, где нужно щадить сервер) -
+  // onclose планирует новый connect(), onerror просто закрывает сокет и
+  // даёт onclose разрулить переподключение (одна точка реконнекта вместо
+  // дублирования логики в обоих обработчиках).
   useEffect(() => {
-    const ws = new WebSocket(WS_URL);
-    wsRef.current = ws;
+    let cancelled = false;
+    let reconnectTimer: number | undefined;
 
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ type: "getFixtures" }));
-    };
+    const connect = () => {
+      const ws = new WebSocket(WS_URL);
+      wsRef.current = ws;
 
-    ws.onmessage = (event: MessageEvent<string>) => {
-      const msg = JSON.parse(event.data) as WsMessage;
-      if (msg.type === "fixtures") {
-        setFixtures(msg.fixtures);
-      } else if (msg.type === "roomStatus") {
-        setStatusById((prev) => {
-          const next = { ...prev };
-          for (const record of msg.records) {
-            next[record.id] = record;
+      ws.onopen = () => {
+        setWsConnected(true);
+        ws.send(JSON.stringify({ type: "getFixtures" }));
+      };
+
+      ws.onmessage = (event: MessageEvent<string>) => {
+        try {
+          const msg = JSON.parse(event.data) as WsMessage;
+          if (msg.type === "fixtures") {
+            setFixtures(msg.fixtures);
+          } else if (msg.type === "roomStatus") {
+            setStatusById((prev) => {
+              const next = { ...prev };
+              for (const record of msg.records) {
+                next[record.id] = record;
+              }
+              return next;
+            });
+          } else if (msg.type === "liveStatusPush") {
+            setStatusById((prev) => ({
+              ...prev,
+              [msg.record.id]: { ...prev[msg.record.id], ...msg.record },
+            }));
           }
-          return next;
-        });
-      } else if (msg.type === "liveStatusPush") {
-        setStatusById((prev) => ({
-          ...prev,
-          [msg.record.id]: { ...prev[msg.record.id], ...msg.record },
-        }));
-      }
+        } catch (err) {
+          console.error("Bad WS message", err);
+        }
+      };
+
+      ws.onerror = () => {
+        ws.close();
+      };
+
+      ws.onclose = () => {
+        setWsConnected(false);
+        if (!cancelled) {
+          reconnectTimer = window.setTimeout(connect, 3000);
+        }
+      };
     };
 
-    return () => ws.close();
+    connect();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(reconnectTimer);
+      wsRef.current?.close();
+    };
   }, []);
 
   // Пересчёт "вписанного" размера картинки по реальным пикселям
@@ -287,7 +320,8 @@ function App() {
   }, []);
 
   const send = (payload: OutgoingMessage) => {
-    wsRef.current?.send(JSON.stringify(payload));
+    if (wsRef.current?.readyState !== WebSocket.OPEN) return;
+    wsRef.current.send(JSON.stringify(payload));
   };
 
   const openRoom = (roomN: number) => {
@@ -485,6 +519,9 @@ function App() {
 
   return (
     <main className="app">
+      {!wsConnected && (
+        <div className="ws-banner">Нет соединения — переподключение…</div>
+      )}
       <div
         className="map-backdrop"
         style={{ backgroundImage: `url(${planImage})` }}
