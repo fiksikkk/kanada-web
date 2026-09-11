@@ -9,6 +9,10 @@ const MESSAGES: Record<string, string> = {
   too_many_attempts: "Слишком много неверных попыток, войдите заново",
   invalid_code: "Неверный код",
   invalid_request: "Некорректный запрос",
+  "2fa_already_enabled": "Двухфакторная аутентификация уже включена",
+  no_pending_secret: "Сначала запросите новый QR-код",
+  unauthorized: "Сессия истекла, войдите заново",
+  csrf_mismatch: "Не удалось подтвердить запрос, обновите страницу",
 };
 
 export function describeAuthError(error: unknown): string {

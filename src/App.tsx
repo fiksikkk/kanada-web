@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import planImage from "./assets/floor-plan.png";
+import { AccountMenu } from "./components/AccountMenu.tsx";
 
 // Раньше указывал прямо на тестовый мост iRidium-сервера
 // (ws://10.10.10.172:8090) - теперь ходит через auth-шлюз (backend/),
@@ -519,6 +520,7 @@ function App() {
 
   return (
     <main className="app">
+      <AccountMenu />
       {!wsConnected && (
         <div className="ws-banner">Нет соединения — переподключение…</div>
       )}
@@ -579,11 +581,11 @@ function App() {
             : (statusById[fixture.id] ?? {});
           const isOn = Boolean(fixtureStatus.s);
           const brightness = fixtureStatus.b ?? 0;
-          // Клацать/крутить можно всегда, даже без соединения с сервером
-          // (для реальной фикстуры команда тогда просто не долетит -
-          // send() безопасно no-op'ает без открытого сокета) - это тест,
-          // не должно блокировать разглядывание UI.
-          const isDisabled = false;
+          // Демо-светильник ни от чего не зависит - живёт только в
+          // локальном стейте. Реальную фикстуру блокируем при разрыве
+          // соединения, чтобы не создавать иллюзию рабочего тумблера,
+          // команда от которого никуда не долетит (см. send()).
+          const isDisabled = !fixture.isDemo && !wsConnected;
           const handleToggle = fixture.isDemo
             ? () => toggleDemoSwitch(openRoomN as number)
             : () => toggleSwitch(fixture.id);

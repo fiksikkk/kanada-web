@@ -3,6 +3,7 @@ import App from "./App.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 import { LoginPage } from "./pages/LoginPage.tsx";
 import { TwoFactorPage } from "./pages/TwoFactorPage.tsx";
+import { SettingsPage } from "./pages/SettingsPage.tsx";
 
 export function AppRouter() {
   return (
@@ -14,6 +15,14 @@ export function AppRouter() {
         element={
           <ProtectedRoute>
             <App />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
           </ProtectedRoute>
         }
       />

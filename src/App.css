@@ -8,6 +8,65 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Голый каркас - как и auth-страницы, без притязаний на финальный вид.
+   Позиция/кликабельность важнее полировки, пока нет дизайнов. */
+.account-menu {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+}
+
+.account-button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #08060d;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.account-dropdown {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  min-width: 180px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.account-name {
+  padding: 6px 8px;
+  font-size: 13px;
+  color: #6b6375;
+}
+
+.account-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #08060d;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.account-menu-item:hover {
+  background: #f4f3ee;
+}
+
 .ws-banner {
   position: absolute;
   top: 12px;
