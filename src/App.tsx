@@ -479,11 +479,19 @@ function App() {
     });
   };
 
-  const setBrightness = (deviceId: string, value: number) => {
+  // Слайдер обновляет локальное состояние на каждый тик драга (плавный
+  // визуал), но setDevice шлём только по отпусканию/клавише - как в
+  // иридиум-панели. Иначе на драге летит сообщение на каждый pixel move,
+  // а с несколькими браузерами на одном слайдере это ещё и дёргает чужой
+  // ползунок посреди чужого драга.
+  const previewBrightness = (deviceId: string, value: number) => {
     setStatusById((prev) => ({
       ...prev,
       [deviceId]: { ...prev[deviceId], id: deviceId, b: value },
     }));
+  };
+
+  const commitBrightness = (deviceId: string, value: number) => {
     send({ type: "setDevice", id: deviceId, field: "brightness", value });
   };
 
@@ -499,11 +507,14 @@ function App() {
     send({ type: "setDevice", id: deviceId, field: "stop", value: 1 });
   };
 
-  const setShutterPosition = (deviceId: string, value: number) => {
+  const previewShutterPosition = (deviceId: string, value: number) => {
     setStatusById((prev) => ({
       ...prev,
       [deviceId]: { ...prev[deviceId], id: deviceId, p: value },
     }));
+  };
+
+  const commitShutterPosition = (deviceId: string, value: number) => {
     send({ type: "setDevice", id: deviceId, field: "position", value });
   };
 
@@ -590,10 +601,14 @@ function App() {
           // тумблера, команда от которого никуда не долетит (см. send()).
           const isDisabled = !wsConnected || !iridiConnected;
           const handleToggle = () => toggleSwitch(device.id);
-          const handleBrightnessChange = (value: number) =>
-            setBrightness(device.id, value);
-          const handlePositionChange = (value: number) =>
-            setShutterPosition(device.id, value);
+          const handleBrightnessPreview = (value: number) =>
+            previewBrightness(device.id, value);
+          const handleBrightnessCommit = (value: number) =>
+            commitBrightness(device.id, value);
+          const handlePositionPreview = (value: number) =>
+            previewShutterPosition(device.id, value);
+          const handlePositionCommit = (value: number) =>
+            commitShutterPosition(device.id, value);
           return (
             <div key={device.id} className="device-card">
               <div className="device-header">
@@ -662,7 +677,13 @@ function App() {
                     max={100}
                     value={brightness}
                     onChange={(event) =>
-                      handleBrightnessChange(Number(event.target.value))
+                      handleBrightnessPreview(Number(event.target.value))
+                    }
+                    onPointerUp={(event) =>
+                      handleBrightnessCommit(Number(event.currentTarget.value))
+                    }
+                    onKeyUp={(event) =>
+                      handleBrightnessCommit(Number(event.currentTarget.value))
                     }
                     disabled={isDisabled}
                   />
@@ -736,7 +757,13 @@ function App() {
                       max={100}
                       value={position}
                       onChange={(event) =>
-                        handlePositionChange(Number(event.target.value))
+                        handlePositionPreview(Number(event.target.value))
+                      }
+                      onPointerUp={(event) =>
+                        handlePositionCommit(Number(event.currentTarget.value))
+                      }
+                      onKeyUp={(event) =>
+                        handlePositionCommit(Number(event.currentTarget.value))
                       }
                       disabled={isDisabled}
                     />
