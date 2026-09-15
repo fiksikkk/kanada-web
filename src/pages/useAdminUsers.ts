@@ -77,15 +77,16 @@ export function useAdminUsers() {
     userId: number,
     role: AdminUser["role"],
     isActive: boolean,
+    scopeRestricted: boolean,
   ) => {
     setMutationError(null);
     setMutatingId(userId);
     try {
-      await updateAdminUser(userId, { role, isActive });
+      await updateAdminUser(userId, { role, isActive, scopeRestricted });
       setUsers(
         (prev) =>
           prev?.map((user) =>
-            user.id === userId ? { ...user, role, isActive } : user,
+            user.id === userId ? { ...user, role, isActive, scopeRestricted } : user,
           ) ?? prev,
       );
       return true;

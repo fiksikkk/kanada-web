@@ -5,7 +5,7 @@ import { useAuth } from "../context/useAuth.ts";
 import { useAdminUsers } from "./useAdminUsers.ts";
 import "./AuthPages.css";
 
-const ROLES: AdminUser["role"][] = ["admin", "user", "guest"];
+const ROLES: AdminUser["role"][] = ["admin", "user"];
 
 function CreateUserForm({
   creating,
@@ -165,13 +165,15 @@ export function AdminUsersPage() {
             <select
               value={user.role}
               disabled={mutatingId === user.id}
-              onChange={(e) =>
+              onChange={(e) => {
+                const role = e.target.value as AdminUser["role"];
                 void updateRole(
                   user.id,
-                  e.target.value as AdminUser["role"],
+                  role,
                   user.isActive,
-                )
-              }
+                  role === "admin" ? false : user.scopeRestricted,
+                );
+              }}
             >
               {ROLES.map((r) => (
                 <option key={r} value={r}>
@@ -185,12 +187,23 @@ export function AdminUsersPage() {
                 checked={user.isActive}
                 disabled={mutatingId === user.id}
                 onChange={(e) =>
-                  void updateRole(user.id, user.role, e.target.checked)
+                  void updateRole(user.id, user.role, e.target.checked, user.scopeRestricted)
                 }
               />
               активен
             </label>
-            {user.role === "guest" && (
+            <label>
+              <input
+                type="checkbox"
+                checked={user.scopeRestricted}
+                disabled={mutatingId === user.id || user.role === "admin"}
+                onChange={(e) =>
+                  void updateRole(user.id, user.role, user.isActive, e.target.checked)
+                }
+              />
+              ограничить зоны
+            </label>
+            {user.scopeRestricted && (
               <ScopeAccessEditor
                 key={user.scopeAccess.join(",")}
                 userId={user.id}

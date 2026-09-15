@@ -4,7 +4,7 @@ export interface SessionUser {
   id: number;
   username: string;
   displayName: string | null;
-  role: "admin" | "user" | "guest";
+  role: "admin" | "user";
   totpEnabled: boolean;
 }
 
@@ -37,9 +37,10 @@ export interface AdminUser {
   id: number;
   username: string;
   displayName: string | null;
-  role: "admin" | "user" | "guest";
+  role: "admin" | "user";
   totpEnabled: boolean;
   isActive: boolean;
+  scopeRestricted: boolean;
   scopeAccess: string[];
 }
 
@@ -200,7 +201,7 @@ export function createAdminUser(input: {
 
 export function updateAdminUser(
   userId: number,
-  input: { role: AdminUser["role"]; isActive: boolean },
+  input: { role: AdminUser["role"]; isActive: boolean; scopeRestricted: boolean },
 ): Promise<{ updated: boolean }> {
   return apiFetch<{ updated: boolean }>(`/admin/users/${userId}`, {
     method: "PATCH",
