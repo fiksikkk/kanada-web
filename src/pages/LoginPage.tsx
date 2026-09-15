@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, type SubmitEvent } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { login } from "../api/client.ts";
 import { describeAuthError } from "../api/errors.ts";
 import { useAuth } from "../context/useAuth.ts";
@@ -14,7 +14,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
@@ -35,6 +35,9 @@ export function LoginPage() {
 
   if (status === "offline") {
     return <OfflineScreen onRetry={() => void refresh()} />;
+  }
+  if (status === "authenticated") {
+    return <Navigate to="/" replace />;
   }
 
   return (

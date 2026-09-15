@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth.ts";
 import { useTotpSetup } from "./useTotpSetup.ts";
@@ -19,7 +19,7 @@ export function SettingsPage() {
     finish,
   } = useTotpSetup();
 
-  const handleConfirm = (event: FormEvent) => {
+  const handleConfirm = (event: SubmitEvent) => {
     event.preventDefault();
     void confirmCode();
   };

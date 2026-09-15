@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type SubmitEvent } from "react";
 import { Link } from "react-router-dom";
 import type { AdminUser } from "../api/client.ts";
 import { useAuth } from "../context/useAuth.ts";
@@ -24,7 +24,7 @@ function CreateUserForm({
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<AdminUser["role"]>("user");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     const ok = await onCreate({ username, password, role });
     if (ok) {
@@ -49,6 +49,7 @@ function CreateUserForm({
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        minLength={12}
         required
       />
       <select
@@ -191,6 +192,7 @@ export function AdminUsersPage() {
             </label>
             {user.role === "guest" && (
               <ScopeAccessEditor
+                key={user.scopeAccess.join(",")}
                 userId={user.id}
                 scopeAccess={user.scopeAccess}
                 disabled={mutatingId === user.id}

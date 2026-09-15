@@ -33,9 +33,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await apiLogout();
-    setUser(null);
-    setStatus("anonymous");
+    try {
+      await apiLogout();
+    } catch (err) {
+      console.error("Failed to log out", err);
+    } finally {
+      setUser(null);
+      setStatus("anonymous");
+    }
   }, []);
 
   useEffect(() => {
