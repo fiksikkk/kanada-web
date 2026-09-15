@@ -1,11 +1,11 @@
 import { useState, type SubmitEvent } from "react";
 import { Link } from "react-router-dom";
-import type { AdminUser } from "../api/client.ts";
+import { Role, type AdminUser } from "../api/client.ts";
 import { useAuth } from "../context/useAuth.ts";
 import { useAdminUsers } from "./useAdminUsers.ts";
 import "./AuthPages.css";
 
-const ROLES: AdminUser["role"][] = ["admin", "user"];
+const ROLES: Role[] = [Role.Admin, Role.User];
 
 function CreateUserForm({
   creating,
@@ -22,7 +22,7 @@ function CreateUserForm({
 }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<AdminUser["role"]>("user");
+  const [role, setRole] = useState<AdminUser["role"]>(Role.User);
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -30,7 +30,7 @@ function CreateUserForm({
     if (ok) {
       setUsername("");
       setPassword("");
-      setRole("user");
+      setRole(Role.User);
     }
   };
 
@@ -171,7 +171,7 @@ export function AdminUsersPage() {
                   user.id,
                   role,
                   user.isActive,
-                  role === "admin" ? false : user.scopeRestricted,
+                  role === Role.Admin ? false : user.scopeRestricted,
                 );
               }}
             >
@@ -196,7 +196,7 @@ export function AdminUsersPage() {
               <input
                 type="checkbox"
                 checked={user.scopeRestricted}
-                disabled={mutatingId === user.id || user.role === "admin"}
+                disabled={mutatingId === user.id || user.role === Role.Admin}
                 onChange={(e) =>
                   void updateRole(user.id, user.role, user.isActive, e.target.checked)
                 }

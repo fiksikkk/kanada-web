@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { Role } from "../api/client.ts";
 import { useAuth } from "../context/useAuth.ts";
 
 export function AccountMenu() {
@@ -41,7 +42,7 @@ export function AccountMenu() {
           >
             Настройки безопасности
           </Link>
-          {user?.role === "admin" && (
+          {user?.role === Role.Admin && (
             <Link
               to="/admin/users"
               className="account-menu-item"

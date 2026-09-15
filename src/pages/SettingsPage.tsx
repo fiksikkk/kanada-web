@@ -1,7 +1,7 @@
 import type { SubmitEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth.ts";
-import { useTotpSetup } from "./useTotpSetup.ts";
+import { TotpSetupStep, useTotpSetup } from "./useTotpSetup.ts";
 import "./AuthPages.css";
 
 export function SettingsPage() {
@@ -33,7 +33,7 @@ export function SettingsPage() {
         <h2>Настройки безопасности</h2>
         <p>Пользователь: {user?.displayName ?? user?.username}</p>
 
-        {step === "idle" && (
+        {step === TotpSetupStep.Idle && (
           <>
             {user?.totpEnabled ? (
               <p>Двухфакторная аутентификация включена.</p>
@@ -54,7 +54,7 @@ export function SettingsPage() {
           </>
         )}
 
-        {step === "confirm" && setup && (
+        {step === TotpSetupStep.Confirm && setup && (
           <form onSubmit={handleConfirm}>
             <p>Отсканируйте QR-код в приложении-аутентификаторе:</p>
             <img
@@ -84,7 +84,7 @@ export function SettingsPage() {
           </form>
         )}
 
-        {step === "codes" && (
+        {step === TotpSetupStep.Codes && (
           <>
             <p>
               Сохраните резервные коды в надёжном месте — повторно они

@@ -1,10 +1,15 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
+export enum Role {
+  Admin = "admin",
+  User = "user",
+}
+
 export interface SessionUser {
   id: number;
   username: string;
   displayName: string | null;
-  role: "admin" | "user";
+  role: Role;
   totpEnabled: boolean;
 }
 
@@ -37,7 +42,7 @@ export interface AdminUser {
   id: number;
   username: string;
   displayName: string | null;
-  role: "admin" | "user";
+  role: Role;
   totpEnabled: boolean;
   isActive: boolean;
   scopeRestricted: boolean;

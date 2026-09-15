@@ -7,11 +7,15 @@ import {
 import { describeAuthError } from "../api/errors.ts";
 import { useAuth } from "../context/useAuth.ts";
 
-type Step = "idle" | "confirm" | "codes";
+export enum TotpSetupStep {
+  Idle = "idle",
+  Confirm = "confirm",
+  Codes = "codes",
+}
 
 export function useTotpSetup() {
   const { refresh } = useAuth();
-  const [step, setStep] = useState<Step>("idle");
+  const [step, setStep] = useState<TotpSetupStep>(TotpSetupStep.Idle);
   const [setup, setSetup] = useState<TotpSetupResponse | null>(null);
   const [code, setCode] = useState("");
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
@@ -24,7 +28,7 @@ export function useTotpSetup() {
     try {
       const result = await setupTotp();
       setSetup(result);
-      setStep("confirm");
+      setStep(TotpSetupStep.Confirm);
     } catch (err) {
       setError(describeAuthError(err));
     } finally {
@@ -38,7 +42,7 @@ export function useTotpSetup() {
     try {
       const result = await confirmTotp(code);
       setRecoveryCodes(result.recoveryCodes);
-      setStep("codes");
+      setStep(TotpSetupStep.Codes);
     } catch (err) {
       setError(describeAuthError(err));
     } finally {
@@ -47,7 +51,7 @@ export function useTotpSetup() {
   };
 
   const finish = async () => {
-    setStep("idle");
+    setStep(TotpSetupStep.Idle);
     setSetup(null);
     setCode("");
     setRecoveryCodes([]);

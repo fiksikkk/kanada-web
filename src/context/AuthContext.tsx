@@ -5,11 +5,11 @@ import {
   onUnauthorized,
   NetworkError,
 } from "../api/client.ts";
-import { AuthContext, type AuthStatus } from "./auth-context.ts";
+import { AuthContext, AuthStatus } from "./auth-context.ts";
 import type { SessionUser } from "../api/client.ts";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<AuthStatus>("loading");
+  const [status, setStatus] = useState<AuthStatus>(AuthStatus.Loading);
   const [user, setUser] = useState<SessionUser | null>(null);
 
   const refresh = useCallback(async () => {
@@ -17,19 +17,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const session = await getSession();
       if (session.authenticated && session.user) {
         setUser(session.user);
-        setStatus("authenticated");
+        setStatus(AuthStatus.Authenticated);
         return;
       }
     } catch (err) {
       console.error("Failed to fetch session", err);
       if (err instanceof NetworkError) {
         setUser(null);
-        setStatus("offline");
+        setStatus(AuthStatus.Offline);
         return;
       }
     }
     setUser(null);
-    setStatus("anonymous");
+    setStatus(AuthStatus.Anonymous);
   }, []);
 
   const logout = useCallback(async () => {
@@ -39,14 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Failed to log out", err);
     } finally {
       setUser(null);
-      setStatus("anonymous");
+      setStatus(AuthStatus.Anonymous);
     }
   }, []);
 
   useEffect(() => {
     onUnauthorized(() => {
       setUser(null);
-      setStatus("anonymous");
+      setStatus(AuthStatus.Anonymous);
     });
     void refresh();
   }, [refresh]);

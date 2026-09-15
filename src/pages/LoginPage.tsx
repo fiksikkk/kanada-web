@@ -2,6 +2,7 @@ import { useState, type SubmitEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { login } from "../api/client.ts";
 import { describeAuthError } from "../api/errors.ts";
+import { AuthStatus } from "../context/auth-context.ts";
 import { useAuth } from "../context/useAuth.ts";
 import { OfflineScreen } from "../components/OfflineScreen.tsx";
 import "./AuthPages.css";
@@ -33,10 +34,10 @@ export function LoginPage() {
     }
   };
 
-  if (status === "offline") {
+  if (status === AuthStatus.Offline) {
     return <OfflineScreen onRetry={() => void refresh()} />;
   }
-  if (status === "authenticated") {
+  if (status === AuthStatus.Authenticated) {
     return <Navigate to="/" replace />;
   }
 
