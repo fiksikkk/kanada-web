@@ -1,5 +1,7 @@
 {
   "name": "web-client",
+  "description": "Web client for a smart-home control panel (iRidium gateway): floor-plan navigation, per-room device control, and admin/auth screens.",
+  "license": "MIT",
   "private": true,
   "version": "0.0.0",
   "type": "module",

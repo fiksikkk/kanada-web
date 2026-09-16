@@ -24,5 +24,13 @@ dist-ssr
 *.sln
 *.sw?
 
+# Claude Code local settings
+.claude/settings.local.json
+
+# Real floor plan (contains actual house layout/camera positions) - kept
+# local only, not published. See src/assets/floor-plan.example.svg and
+# README for what to put here.
+src/assets/floor-plan.png
+
 # TypeScript build cache
 *.tsbuildinfo
