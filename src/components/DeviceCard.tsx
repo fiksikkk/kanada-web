@@ -1,7 +1,3 @@
-// ЗАКОММЕНТИРОВАНО: черновик выноса рендера карточки устройства из App.tsx
-// в отдельный компонент. Пока не подключен - App.tsx рендерит карточки
-// инлайн. Код оставлен для будущего включения.
-/*
 import type { Device, StatusRecord } from "../hooks/useDeviceSocket.ts";
 
 interface DeviceCardProps {
@@ -190,4 +186,3 @@ export function DeviceCard({
     </div>
   );
 }
-*/

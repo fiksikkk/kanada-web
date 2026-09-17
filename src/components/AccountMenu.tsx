@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Role } from "../api/client.ts";
+import { useAdminNotifications } from "../context/useAdminNotifications.ts";
 import { useAuth } from "../context/useAuth.ts";
 
 export function AccountMenu() {
   const { user, logout } = useAuth();
+  const { unreadCount } = useAdminNotifications();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -29,6 +31,9 @@ export function AccountMenu() {
         {user?.displayName?.[0]?.toUpperCase() ??
           user?.username?.[0]?.toUpperCase() ??
           "?"}
+        {user?.role === Role.Admin && unreadCount > 0 && (
+          <span className="account-badge">{unreadCount}</span>
+        )}
       </button>
       {open && (
         <div className="account-dropdown">
@@ -58,6 +63,15 @@ export function AccountMenu() {
               onClick={() => setOpen(false)}
             >
               Бэкапы БД
+            </Link>
+          )}
+          {user?.role === Role.Admin && (
+            <Link
+              to="/admin/notifications"
+              className="account-menu-item"
+              onClick={() => setOpen(false)}
+            >
+              Уведомления{unreadCount > 0 ? ` (${unreadCount})` : ""}
             </Link>
           )}
           <button

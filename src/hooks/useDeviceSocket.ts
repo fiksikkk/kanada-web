@@ -1,19 +1,7 @@
-// ЗАКОММЕНТИРОВАНО: черновик выноса WS-логики устройств (подключение,
-// реконнект, optimistic-обновления) из App.tsx в отдельный хук. Пока не
-// подключен - App.tsx по-прежнему держит эту логику инлайн. Код оставлен
-// для будущего включения, когда дойдём до этого рефакторинга.
-/*
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getWsUrl } from "../ws/wsUrl.ts";
 
-// Раньше указывал прямо на тестовый мост iRidium-сервера
-// (ws://10.10.10.172:8090) - теперь ходит через auth-шлюз (backend/),
-// который сам проверяет сессию/Origin на апгрейде и релеит сообщения
-// туда (см. WsGatewayService). VITE_WS_URL - для дева, где backend и
-// web-client на разных портах; в проде (за Caddy, один origin) можно
-// оставить пустым - соберётся из текущего location.
-const WS_URL =
-  import.meta.env.VITE_WS_URL ||
-  `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws`;
+const WS_URL = getWsUrl();
 
 export interface Device {
   id: string;
@@ -212,4 +200,3 @@ export function useDeviceSocket() {
     commitShutterPosition,
   };
 }
-*/

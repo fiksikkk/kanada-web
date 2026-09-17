@@ -18,6 +18,7 @@
 }
 
 .account-button {
+  position: relative;
   width: 36px;
   height: 36px;
   border: none;
@@ -27,6 +28,21 @@
   font-weight: 500;
   cursor: pointer;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.account-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: #d33;
+  color: #fff;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
 }
 
 .account-dropdown {
@@ -399,11 +415,6 @@
   cursor: default;
 }
 
-/* ЗАКОММЕНТИРОВАНО: стили под черновик вида "Список комнат" (переключатель
-   План/Список, меню комнат по этажам, сетка карточек устройств) - см.
-   src/App.tsx (комментарий с новой версией App) и src/components/RoomMenu.tsx.
-   Пока не подключено. */
-/*
 .view-toggle {
   position: absolute;
   top: 12px;
@@ -522,4 +533,3 @@
   color: #6b6375;
   font-size: 14px;
 }
-*/

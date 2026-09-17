@@ -1,8 +1,3 @@
-// ЗАКОММЕНТИРОВАНО: черновик выноса данных хотспотов комнат из App.tsx в
-// отдельный модуль (с добавленным полем floor под будущий список комнат
-// по этажам). Пока не подключен - App.tsx держит ROOM_HOTSPOTS инлайн, без
-// floor. Код оставлен для будущего включения.
-/*
 export interface Hotspot {
   roomN: number;
   label: string;
@@ -132,4 +127,3 @@ export const ROOM_HOTSPOTS: Hotspot[] = [
     height: 14,
   },
 ];
-*/

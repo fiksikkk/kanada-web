@@ -49,6 +49,18 @@ export interface AdminUser {
   scopeAccess: string[];
 }
 
+export type NotificationSeverity = "info" | "warning" | "error";
+
+export interface AdminNotification {
+  id: number;
+  type: string;
+  severity: NotificationSeverity;
+  title: string;
+  detail: Record<string, unknown> | null;
+  createdAt: string;
+  readAt: string | null;
+}
+
 export interface BackupEntry {
   file: string;
   createdAt: string;
@@ -249,4 +261,25 @@ export function restoreBackup(file: string): Promise<{ restored: boolean }> {
     `/admin/backups/${encodeURIComponent(file)}/restore`,
     { method: "POST" },
   );
+}
+
+export function listAdminNotifications(before?: number): Promise<{
+  notifications: AdminNotification[];
+  unreadCount: number;
+  hasMore: boolean;
+}> {
+  const qs = before ? `?before=${before}` : "";
+  return apiFetch(`/admin/notifications${qs}`);
+}
+
+export function markNotificationRead(id: number): Promise<{ read: boolean }> {
+  return apiFetch<{ read: boolean }>(`/admin/notifications/${id}/read`, {
+    method: "POST",
+  });
+}
+
+export function markAllNotificationsRead(): Promise<{ read: boolean }> {
+  return apiFetch<{ read: boolean }>("/admin/notifications/read-all", {
+    method: "POST",
+  });
 }

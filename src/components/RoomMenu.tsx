@@ -1,6 +1,3 @@
-// ЗАКОММЕНТИРОВАНО: черновик меню комнат по этажам для нового вида
-// "Список" (альтернатива картинке плана). Пока не подключен к App.tsx.
-/*
 import type { Hotspot } from "../rooms.ts";
 
 interface RoomMenuProps {
@@ -39,4 +36,3 @@ export function RoomMenu({ rooms, selectedRoomN, onSelect }: RoomMenuProps) {
     </nav>
   );
 }
-*/
