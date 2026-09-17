@@ -49,6 +49,12 @@ export interface AdminUser {
   scopeAccess: string[];
 }
 
+export interface BackupEntry {
+  file: string;
+  createdAt: string;
+  sizeBytes: number;
+}
+
 export class ApiError extends Error {
   status: number;
   code: string;
@@ -228,4 +234,19 @@ export function setAdminUserScopes(
     method: "PUT",
     body: { scopeIds },
   });
+}
+
+export function listBackups(): Promise<{ backups: BackupEntry[] }> {
+  return apiFetch<{ backups: BackupEntry[] }>("/admin/backups");
+}
+
+export function createBackup(): Promise<{ file: string }> {
+  return apiFetch<{ file: string }>("/admin/backups", { method: "POST" });
+}
+
+export function restoreBackup(file: string): Promise<{ restored: boolean }> {
+  return apiFetch<{ restored: boolean }>(
+    `/admin/backups/${encodeURIComponent(file)}/restore`,
+    { method: "POST" },
+  );
 }

@@ -15,6 +15,10 @@ const MESSAGES: Record<string, string> = {
   csrf_mismatch: "Не удалось подтвердить запрос, обновите страницу",
   user_not_found: "Пользователь не найден",
   forbidden: "Недостаточно прав",
+  backup_failed: "Не удалось сделать бэкап (сервер недоступен?)",
+  restore_failed: "Не удалось восстановить бэкап (сервер недоступен?)",
+  backup_not_found: "Бэкап не найден",
+  invalid_backup_file_name: "Некорректное имя файла бэкапа",
 };
 
 export function describeAuthError(error: unknown): string {

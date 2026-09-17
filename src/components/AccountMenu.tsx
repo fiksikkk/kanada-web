@@ -51,6 +51,15 @@ export function AccountMenu() {
               Администрирование
             </Link>
           )}
+          {user?.role === Role.Admin && (
+            <Link
+              to="/admin/backups"
+              className="account-menu-item"
+              onClick={() => setOpen(false)}
+            >
+              Бэкапы БД
+            </Link>
+          )}
           <button
             type="button"
             className="account-menu-item"
