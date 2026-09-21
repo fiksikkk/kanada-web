@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Role } from "../api/client.ts";
 import { useAdminNotifications } from "../context/useAdminNotifications.ts";
 import { useAuth } from "../context/useAuth.ts";
+import "./AccountMenu.css";
 
 export function AccountMenu() {
   const { user, logout } = useAuth();
@@ -46,6 +47,13 @@ export function AccountMenu() {
             onClick={() => setOpen(false)}
           >
             Настройки безопасности
+          </Link>
+          <Link
+            to="/scenarios"
+            className="account-menu-item"
+            onClick={() => setOpen(false)}
+          >
+            Сценарии
           </Link>
           {user?.role === Role.Admin && (
             <Link

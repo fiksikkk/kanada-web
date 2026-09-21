@@ -1,4 +1,5 @@
 import type { Device, StatusRecord } from "../hooks/useDeviceSocket.ts";
+import "./DeviceCard.css";
 
 interface DeviceCardProps {
   device: Device;

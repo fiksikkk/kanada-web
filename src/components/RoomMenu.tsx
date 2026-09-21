@@ -1,4 +1,5 @@
 import type { Hotspot } from "../rooms.ts";
+import "./RoomMenu.css";
 
 interface RoomMenuProps {
   rooms: Hotspot[];

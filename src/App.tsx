@@ -6,7 +6,7 @@ import { DeviceList } from "./components/DeviceList.tsx";
 import { FloorPlanView } from "./components/FloorPlanView.tsx";
 import { RoomMenu } from "./components/RoomMenu.tsx";
 import { ROOM_HOTSPOTS } from "./rooms.ts";
-import { useDeviceSocket } from "./hooks/useDeviceSocket.ts";
+import { useDeviceSocketContext } from "./context/useDeviceSocketContext.ts";
 import { useRoomViewState } from "./hooks/useRoomViewState.ts";
 
 function App() {
@@ -26,7 +26,9 @@ function App() {
     stopShutter,
     previewShutterPosition,
     commitShutterPosition,
-  } = useDeviceSocket();
+    scenes,
+    runScene,
+  } = useDeviceSocketContext();
 
   // Запрашиваем статус устройств выбранной комнаты при любой смене
   // выбора - по клику на плане, по клику в списке или сразу при заходе по
@@ -76,6 +78,21 @@ function App() {
           Список
         </button>
       </div>
+      {scenes.length > 0 && (
+        <div className="scenario-quick-run">
+          {scenes.map((scene) => (
+            <button
+              key={scene.number}
+              type="button"
+              className="scenario-quick-run-btn"
+              disabled={isDisabled}
+              onClick={() => runScene(scene.number)}
+            >
+              {scene.name}
+            </button>
+          ))}
+        </div>
+      )}
       {!wsConnected && (
         <div className="ws-banner">Нет соединения — переподключение…</div>
       )}

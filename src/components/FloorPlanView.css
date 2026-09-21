@@ -1,0 +1,78 @@
+.map-backdrop {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(60px) brightness(0.75) saturate(1.1);
+  transform: scale(1.15);
+}
+
+.map-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Стабильный, никогда сам не трансформируется - его rect это всегда
+   "естественная" геометрия картинки для расчёта камеры в useMapCamera,
+   независимо от текущего зума/сдвига .map-camera внутри. Размер
+   (width/height) задаётся инлайн-стилем из useMapCamera пикселями
+   (computeFitSize) - CSS aspect-ratio внутри flex ненадёжно выводит
+   высоту из ширины на части мобильных браузеров (картинку растягивало).
+   БЕЗ overflow:hidden - иначе зумленный .map-camera обрезался бы по
+   границе этого (фиксированного, "как картинка вписана без зума")
+   прямоугольника вместо границы всего экрана; обрезка уже есть у
+   .map-viewport выше по дереву. touch-action:none - иначе на
+   тач-устройствах браузер сам перехватит драг/пинч под нативный
+   скролл/зум страницы вместо наших pointer-обработчиков. */
+.map-sizer {
+  position: relative;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.map-sizer:active {
+  cursor: grabbing;
+}
+
+/* Единая камера: transform-origin всегда в углу (0 0), transform всегда
+   translate(x,y) scale(s) - x/y/s и transition считаются в useMapCamera
+   (transition выключается на время живого драга/пинча/колеса). */
+.map-camera {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+}
+
+.map-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.room-hotspot {
+  position: absolute;
+  border: none;
+  background: transparent;
+  color: transparent;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.room-hotspot:focus {
+  outline: none;
+}
+
+.room-hotspot:disabled {
+  cursor: default;
+  opacity: 0.5;
+}

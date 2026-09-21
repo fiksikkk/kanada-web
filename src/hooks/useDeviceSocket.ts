@@ -17,11 +17,67 @@ export interface StatusRecord {
   p?: number;
 }
 
+export interface SceneSummary {
+  number: number;
+  name: string;
+}
+
+export interface SceneDeviceRecord {
+  id: string;
+  roomN: number;
+  type: string;
+  active: boolean;
+  switchValue: boolean;
+  brightnessValue?: number;
+  positionValue?: number;
+}
+
+export type SceneDayField =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
+export type SceneSchedule = { hour: number; minute: number } & Record<
+  SceneDayField,
+  boolean
+>;
+
+export interface SceneDetail {
+  number: number;
+  name: string;
+  devices: SceneDeviceRecord[];
+  schedule: SceneSchedule;
+}
+
+// Ровно тот набор полей, что и upsert-запись SceneWsBridge.js на сервере -
+// поле пишется, только если оно вообще передано (undefined = "не трогать").
+export interface SceneUpsertRecord {
+  id: string;
+  active?: boolean;
+  switch?: boolean;
+  brightness?: number;
+  position?: number;
+}
+
 type WsMessage =
   | { type: "devices"; devices: Device[] }
   | { type: "roomStatus"; records: StatusRecord[] }
   | { type: "liveStatusPush"; record: StatusRecord }
-  | { type: "iridiStatus"; connected: boolean };
+  | { type: "iridiStatus"; connected: boolean }
+  | { type: "scenes"; scenes: SceneSummary[] }
+  | {
+      type: "sceneDetail";
+      number: number;
+      name: string;
+      devices: SceneDeviceRecord[];
+      schedule: SceneSchedule;
+    }
+  | { type: "sceneDeleted"; number: number }
+  | { type: "sceneSchedule"; number: number; schedule: SceneSchedule };
 
 type OutgoingMessage =
   | { type: "getDevices" }
@@ -31,16 +87,49 @@ type OutgoingMessage =
       id: string;
       field: "switch" | "brightness" | "move" | "stop" | "position";
       value: boolean | number;
+    }
+  | { type: "getScenes" }
+  | { type: "getSceneDetail"; number: number }
+  | {
+      type: "saveScene";
+      number: number | null;
+      name: string;
+      upsert: SceneUpsertRecord[];
+      remove: string[];
+    }
+  | { type: "deleteScene"; number: number }
+  | { type: "runScene"; number: number }
+  | { type: "getSceneSchedule"; number: number }
+  | {
+      type: "setSceneSchedule";
+      number: number;
+      hour: number;
+      minute: number;
+      days: Partial<Record<SceneDayField, boolean>>;
     };
 
-// Живое WS-соединение с устройствами - общее для всех видов приложения
-// (план этажа, список комнат), чтобы не открывать по сокету на каждый вид
-// и не дублировать реконнект/optimistic-обновления.
-export function useDeviceSocket() {
+// Живое WS-соединение с устройствами и сценариями - общее для всех видов
+// приложения (план этажа, список комнат, редактор сценариев), чтобы не
+// открывать по сокету на каждый вид и не дублировать реконнект/optimistic-
+// обновления. Инстанцируется один раз в DeviceSocketProvider - здесь только
+// сама реализация. enabled=false (разлогинен) закрывает и не открывает
+// сокет заново, как и isAdmin-гейт в AdminNotificationsProvider.
+export function useDeviceSocket(enabled: boolean) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [statusById, setStatusById] = useState<Record<string, StatusRecord>>(
     {},
   );
+  const [scenes, setScenes] = useState<SceneSummary[]>([]);
+  // Последний полученный ответ sceneDetail/sceneSchedule - не кэш по
+  // номерам (сценариев мало, редактор открыт с одним номером за раз),
+  // просто "то, что последним прилетело" - страница-потребитель сверяет
+  // number сама. Ответы приходят широковещательно всем браузерам (как и
+  // остальной протокол, см. WsGatewayService.broadcastToBrowsers), не
+  // только тому, кто запросил.
+  const [sceneDetail, setSceneDetail] = useState<SceneDetail | null>(null);
+  const [sceneSchedule, setSceneScheduleState] = useState<
+    { number: number; schedule: SceneSchedule } | null
+  >(null);
   const [wsConnected, setWsConnected] = useState(false);
   // Соединение браузер<->Node может быть открыто, а сам Node при этом не
   // достучаться до iRidium (см. WsGatewayService/broadcastIridiStatus) -
@@ -54,6 +143,8 @@ export function useDeviceSocket() {
   // даёт onclose разрулить переподключение (одна точка реконнекта вместо
   // дублирования логики в обоих обработчиках).
   useEffect(() => {
+    if (!enabled) return undefined;
+
     let cancelled = false;
     let reconnectTimer: number | undefined;
 
@@ -64,6 +155,7 @@ export function useDeviceSocket() {
       ws.onopen = () => {
         setWsConnected(true);
         ws.send(JSON.stringify({ type: "getDevices" }));
+        ws.send(JSON.stringify({ type: "getScenes" }));
       };
 
       ws.onmessage = (event: MessageEvent<string>) => {
@@ -86,6 +178,22 @@ export function useDeviceSocket() {
             }));
           } else if (msg.type === "iridiStatus") {
             setIridiConnected(msg.connected);
+          } else if (msg.type === "scenes") {
+            setScenes(msg.scenes);
+          } else if (msg.type === "sceneDetail") {
+            setSceneDetail({
+              number: msg.number,
+              name: msg.name,
+              devices: msg.devices,
+              schedule: msg.schedule,
+            });
+          } else if (msg.type === "sceneDeleted") {
+            setScenes((prev) => prev.filter((s) => s.number !== msg.number));
+            setSceneDetail((prev) =>
+              prev && prev.number === msg.number ? null : prev,
+            );
+          } else if (msg.type === "sceneSchedule") {
+            setSceneScheduleState({ number: msg.number, schedule: msg.schedule });
           }
         } catch (err) {
           console.error("Bad WS message", err);
@@ -111,7 +219,7 @@ export function useDeviceSocket() {
       window.clearTimeout(reconnectTimer);
       wsRef.current?.close();
     };
-  }, []);
+  }, [enabled]);
 
   const send = useCallback((payload: OutgoingMessage) => {
     if (wsRef.current?.readyState !== WebSocket.OPEN) return;
@@ -185,6 +293,46 @@ export function useDeviceSocket() {
     send({ type: "setDevice", id: deviceId, field: "position", value });
   };
 
+  const requestSceneDetail = useCallback(
+    (number: number) => send({ type: "getSceneDetail", number }),
+    [send],
+  );
+
+  const saveScene = useCallback(
+    (payload: {
+      number: number | null;
+      name: string;
+      upsert: SceneUpsertRecord[];
+      remove: string[];
+    }) => send({ type: "saveScene", ...payload }),
+    [send],
+  );
+
+  const deleteScene = useCallback(
+    (number: number) => send({ type: "deleteScene", number }),
+    [send],
+  );
+
+  const runScene = useCallback(
+    (number: number) => send({ type: "runScene", number }),
+    [send],
+  );
+
+  const requestSceneSchedule = useCallback(
+    (number: number) => send({ type: "getSceneSchedule", number }),
+    [send],
+  );
+
+  const saveSceneSchedule = useCallback(
+    (payload: {
+      number: number;
+      hour: number;
+      minute: number;
+      days: Partial<Record<SceneDayField, boolean>>;
+    }) => send({ type: "setSceneSchedule", ...payload }),
+    [send],
+  );
+
   return {
     devices,
     statusById,
@@ -198,5 +346,14 @@ export function useDeviceSocket() {
     stopShutter,
     previewShutterPosition,
     commitShutterPosition,
+    scenes,
+    sceneDetail,
+    sceneSchedule,
+    requestSceneDetail,
+    saveScene,
+    deleteScene,
+    runScene,
+    requestSceneSchedule,
+    saveSceneSchedule,
   };
 }

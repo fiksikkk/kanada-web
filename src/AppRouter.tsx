@@ -7,6 +7,8 @@ import { SettingsPage } from "./pages/SettingsPage.tsx";
 import { AdminUsersPage } from "./pages/AdminUsersPage.tsx";
 import { AdminBackupsPage } from "./pages/AdminBackupsPage.tsx";
 import { AdminNotificationsPage } from "./pages/AdminNotificationsPage.tsx";
+import { ScenariosPage } from "./pages/ScenariosPage.tsx";
+import { ScenarioEditorPage } from "./pages/ScenarioEditorPage.tsx";
 
 export function AppRouter() {
   return (
@@ -26,6 +28,30 @@ export function AppRouter() {
         element={
           <ProtectedRoute>
             <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scenarios"
+        element={
+          <ProtectedRoute>
+            <ScenariosPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scenarios/new"
+        element={
+          <ProtectedRoute>
+            <ScenarioEditorPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scenarios/:number"
+        element={
+          <ProtectedRoute>
+            <ScenarioEditorPage />
           </ProtectedRoute>
         }
       />

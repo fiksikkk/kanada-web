@@ -1,0 +1,184 @@
+.device-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  pointer-events: auto;
+}
+
+.device-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.device-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: #c7c5cc;
+  transition: color 0.2s ease;
+}
+
+.device-icon.on {
+  color: #ff9d1f;
+}
+
+.device-name {
+  flex: 1;
+  font-weight: 500;
+  color: #08060d;
+}
+
+/* Тумблер-переключатель - пилюля с кружком, вместо кнопки "Вкл/Выкл". */
+.toggle-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #e2e0e6;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toggle-switch.on {
+  background: linear-gradient(135deg, #ffc35c, #ff9d1f);
+}
+
+.toggle-switch:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease;
+}
+
+.toggle-switch.on .toggle-knob {
+  transform: translateX(20px);
+}
+
+.brightness-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Слайдер яркости со стилизованной заливкой по значению (--fill,
+   выставляется инлайн из DeviceCard) и кастомным кружком-ползунком -
+   отдельно под WebKit/Blink (::-webkit-slider-thumb, градиент фона) и
+   под Firefox (::-moz-range-track/-progress, там градиент фона не
+   работает для "заливки", нужен отдельный progress-псевдоэлемент). */
+.brightness-slider {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    #ff9d1f var(--fill, 0%),
+    #ecebee var(--fill, 0%)
+  );
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.brightness-slider:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.brightness-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #ff9d1f;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.brightness-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #ecebee;
+}
+
+.brightness-slider::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: #ff9d1f;
+}
+
+.brightness-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #ff9d1f;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.brightness-value {
+  width: 38px;
+  text-align: right;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: #6b6375;
+}
+
+.shutter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shutter-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.shutter-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: #f4f3f6;
+  color: #6b6375;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.shutter-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.shutter-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
