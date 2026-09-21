@@ -64,10 +64,14 @@ See [.env.example](.env.example).
 ```
 src/
   api/           HTTP client and typed request/response shapes
-  components/    Shared UI (account menu, error boundary, route guard, ...)
-  context/       Auth context/provider
-  pages/         Route-level screens (login, 2FA, settings, admin users)
-  App.tsx        Floor-plan viewer and device control panel
+  components/    Shared UI (account menu, floor-plan view, device card,
+                 room menu, error boundary, route guard, ...)
+  context/       Auth and admin-notifications context/providers
+  hooks/         Device WebSocket, map pan/zoom camera, view/room state
+  pages/         Route-level screens (login, 2FA, settings, admin users,
+                 admin backups, admin notifications)
+  rooms.ts       Room hotspot data (coordinates, floor)
+  App.tsx        Composes the floor-plan / room-list views
 ```
 
 ## Note on assets
@@ -77,9 +81,10 @@ The app imports its floor plan from `src/assets/floor-plan.png`, which is
 house. To run the app, drop your own floor plan image at that path — see
 [floor-plan.example.svg](src/assets/floor-plan.example.svg) for the expected
 aspect ratio (761×1013) and a generic layout generated from the
-`ROOM_HOTSPOTS` coordinates in `App.tsx`. Adjust `ROOM_HOTSPOTS` (and
-`IMAGE_WIDTH`/`IMAGE_HEIGHT` if your image has a different aspect ratio) to
-match your own layout.
+`ROOM_HOTSPOTS` coordinates in [src/rooms.ts](src/rooms.ts). Adjust
+`ROOM_HOTSPOTS` (and `IMAGE_WIDTH`/`IMAGE_HEIGHT` in
+[src/hooks/useMapCamera.ts](src/hooks/useMapCamera.ts) if your image has a
+different aspect ratio) to match your own layout.
 
 ## License
 
