@@ -51,6 +51,7 @@ export interface SceneDetail {
   name: string;
   devices: SceneDeviceRecord[];
   schedule: SceneSchedule;
+  clientRequestId?: string;
 }
 
 // Ровно тот набор полей, что и upsert-запись SceneWsBridge.js на сервере -
@@ -75,6 +76,7 @@ type WsMessage =
       name: string;
       devices: SceneDeviceRecord[];
       schedule: SceneSchedule;
+      clientRequestId?: string;
     }
   | { type: "sceneDeleted"; number: number }
   | { type: "sceneSchedule"; number: number; schedule: SceneSchedule };
@@ -96,6 +98,7 @@ type OutgoingMessage =
       name: string;
       upsert: SceneUpsertRecord[];
       remove: string[];
+      clientRequestId?: string;
     }
   | { type: "deleteScene"; number: number }
   | { type: "runScene"; number: number }
@@ -186,6 +189,7 @@ export function useDeviceSocket(enabled: boolean) {
               name: msg.name,
               devices: msg.devices,
               schedule: msg.schedule,
+              clientRequestId: msg.clientRequestId,
             });
           } else if (msg.type === "sceneDeleted") {
             setScenes((prev) => prev.filter((s) => s.number !== msg.number));
@@ -304,6 +308,7 @@ export function useDeviceSocket(enabled: boolean) {
       name: string;
       upsert: SceneUpsertRecord[];
       remove: string[];
+      clientRequestId?: string;
     }) => send({ type: "saveScene", ...payload }),
     [send],
   );

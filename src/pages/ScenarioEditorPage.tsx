@@ -96,6 +96,21 @@ export function ScenarioEditorPage() {
   const [schedule, setSchedule] = useState<SceneSchedule>(EMPTY_SCHEDULE);
   const [selectedRoomN, setSelectedRoomN] = useState<number | null>(null);
   const [loadedFromDetail, setLoadedFromDetail] = useState(false);
+  // Создание нового сценария: номер назначает сервер, ждём "свой" ответ
+  // sceneDetail и переходим в редактор созданного сценария - расписание
+  // можно задать только сценарию с номером.
+  const [pendingCreateId, setPendingCreateId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (
+      pendingCreateId === null ||
+      !sceneDetail ||
+      sceneDetail.clientRequestId !== pendingCreateId
+    ) {
+      return;
+    }
+    navigate(`/scenarios/${sceneDetail.number}`, { replace: true });
+  }, [pendingCreateId, sceneDetail, navigate]);
 
   useEffect(() => {
     if (editingNumber === null) return;
@@ -210,12 +225,20 @@ export function ScenarioEditorPage() {
   const includedIds = Object.keys(draft);
 
   function handleSave() {
-    saveScene({
+    const payload = {
       number: editingNumber,
       name: name.trim() || "Без названия",
       upsert: Object.values(draft),
       remove: Array.from(removedIds),
-    });
+    };
+    if (editingNumber === null) {
+      // не crypto.randomUUID - он есть только в secure context (https/localhost)
+      const clientRequestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setPendingCreateId(clientRequestId);
+      saveScene({ ...payload, clientRequestId });
+      return;
+    }
+    saveScene(payload);
     navigate("/scenarios");
   }
 
@@ -268,7 +291,12 @@ export function ScenarioEditorPage() {
               Удалить
             </button>
           )}
-          <button type="button" className="auth-submit" onClick={handleSave}>
+          <button
+            type="button"
+            className="auth-submit"
+            onClick={handleSave}
+            disabled={pendingCreateId !== null}
+          >
             Сохранить
           </button>
         </div>
@@ -412,6 +440,15 @@ export function ScenarioEditorPage() {
           )}
         </div>
       </section>
+
+      {editingNumber === null && (
+        <section className="scenario-editor-section">
+          <h3>Расписание</h3>
+          <p className="scenario-schedule-hint">
+            Расписание можно задать после первого сохранения сценария.
+          </p>
+        </section>
+      )}
 
       {editingNumber !== null && (
         <section className="scenario-editor-section">
